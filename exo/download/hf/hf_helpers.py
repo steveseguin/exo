@@ -203,8 +203,11 @@ async def download_file(
             await progress_callback(RepoFileProgressEvent(repo_id, revision, file_path, downloaded_size, downloaded_this_session, total_size, 0, timedelta(0), "complete"))
           return
       except ValueError:
-        if DEBUG >= 1: print(f"Failed to parse Content-Range header: {content_range}. Starting download from scratch...")
+        if DEBUG >= 1: print(f"Failed to parse Content-Range header: {content_range}")
+      # A mismatched local file cannot be resumed. Never append a 416 error body.
+      if use_range_request:
         return await download_file(session, repo_id, revision, file_path, save_directory, progress_callback, use_range_request=False)
+      raise aiohttp.ClientResponseError(response.request_info, response.history, status=response.status, message=f"Failed to download {file_path}: {response.status}")
     else:
       raise aiohttp.ClientResponseError(response.request_info, response.history, status=response.status, message=f"Failed to download {file_path}: {response.status}")
 
