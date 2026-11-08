@@ -20,7 +20,8 @@ def batch_with_lengths(tokens, maxlen = None):
   for j in range(batch_size):
     batch_arr[j, : lengths[j]] = tokens[j]
   batch = np.array(batch_arr)
-  return batch[:, :-1], batch[:, 1:], np.array(lengths)
+  # Shifting by one leaves one fewer valid target per sequence.
+  return batch[:, :-1], batch[:, 1:], np.maximum(np.array(lengths) - 1, 0)
 
 def batch_chunk(batch_size):
   return lambda d, i: d[i:i + batch_size]
